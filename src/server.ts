@@ -1,16 +1,10 @@
-import express from 'express';
 
-const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+import { env } from './config/env';
+import { app } from './app';
+import { prisma } from './lib/prisma';
 
-// Đọc dữ liệu JSON trong body của request
-app.use(express.json());
-
-// API kiểm tra server còn sống
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', time: new Date().toISOString() });
+const server = app.listen(env.PORT, () => {
+  console.log(`Server đang chạy tại http://localhost:${env.PORT}`);
 });
 
-app.listen(PORT, () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
-});
+

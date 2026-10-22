@@ -1,0 +1,24 @@
+$kind: http-request
+description: ""
+url: "{{baseUrl}}/api/v1/auth/login"
+method: POST
+body:
+  type: json
+  content: "     {\r
+
+    \       \"email\": \"a@gmail.com\",\r
+
+    \       \"password\": \"12345678\"\r
+
+    \     }"
+scripts:
+  - type: afterResponse
+    code: "    const body = pm.response.json();\r
+
+      \     if (body.data && body.data.accessToken) {\r
+
+      \       pm.environment.set(\"accessToken\", body.data.accessToken);\r
+
+      \     }"
+    language: text/javascript
+order: 1000

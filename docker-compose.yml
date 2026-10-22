@@ -1,0 +1,34 @@
+
+# Docker Compose: dựng các dịch vụ hạ tầng 
+# Chạy:   docker compose up -d     (khởi động, chạy ngầm)
+# Dừng:   docker compose down      (dừng, GIỮ dữ liệu)
+# Xóa sạch dữ liệu: docker compose down -v   (cẩn thận: mất toàn bộ CSDL)
+
+services:
+  #DB
+  postgres:
+    image: postgres:16-alpine          
+    container_name: fashion_postgres   
+    environment:                       # Tài khoản và CSDL tạo sẵn lần chạy đầu tiên
+      POSTGRES_USER: fashion           
+      POSTGRES_PASSWORD: fashion123    
+      POSTGRES_DB: fashion_db       
+    ports:
+      - "5433:5432"                    # Cổng máy thật : cổng trong container
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Lưu dữ liệu ra volume để không mất khi tắt container
+    healthcheck:                       # Docker tự kiểm tra PostgreSQL đã sẵn sàng nhận kết nối chưa
+      test: ["CMD-SHELL", "pg_isready -U fashion -d fashion_db"]
+      interval: 5s                     # Kiểm tra mỗi 5 giây
+      timeout: 3s                      # Quá 3 giây không trả lời coi như lỗi
+      retries: 10                      # Lỗi 10 lần liên tiếp thì báo "unhealthy"
+
+  # Redis: bộ nhớ đệm, khóa idempotency, hàng đợi BullMQ 
+  redis:
+    image: redis:7-alpine              
+    container_name: fashion_redis
+    ports:
+      - "6379:6379"                   
+
+volumes:
+  pgdata:

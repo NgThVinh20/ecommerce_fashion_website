@@ -13,5 +13,8 @@ export const loginSchema = z.object({
 });
 
 // tự động tạo kiểu tương ứng
+export const refreshSchema = z.object({
+  refreshToken: z.string().min(1),
+});
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

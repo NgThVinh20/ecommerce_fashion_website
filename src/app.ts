@@ -11,7 +11,7 @@ app.use(express.json());
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', time: new Date().toISOString() });
 });
-   app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 
 app.use(notFound);

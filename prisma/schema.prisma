@@ -1,33 +1,31 @@
-// =============================================================
-// Lược đồ cơ sở dữ liệu (Prisma). Mỗi "model" là một bảng.
-// Sửa xong chạy: yarn prisma migrate dev --name <tên thay đổi>
-// =============================================================
 
-// Sinh thư viện Prisma Client để dùng trong code TypeScript
+//  yarn prisma migrate dev --name <tên thay đổi>
+
+
 generator client {
   provider = "prisma-client-js"
 }
 
-// Kết nối PostgreSQL, chuỗi kết nối lấy từ DATABASE_URL trong file .env
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Vai trò người dùng: khách hàng, nhà cung cấp, quản trị viên
+
 enum UserRole {
   CUSTOMER
   SELLER
   ADMIN
 }
 
-// Trạng thái tài khoản: đang hoạt động hoặc bị khóa
+// Trạng thái tài khoản
 enum UserStatus {
   ACTIVE
   LOCKED
 }
 
-// Bảng users: người dùng của hệ thống
+// Bảng users
 model User {
   id_user       Int        @id @default(autoincrement()) // PK, tự tăng
   fullname      String     @db.VarChar(100)              // Họ tên

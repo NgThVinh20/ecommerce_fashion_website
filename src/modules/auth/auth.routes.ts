@@ -7,3 +7,5 @@ export const authRoutes = Router();
 authRoutes.post('/register', authController.register);
 authRoutes.post('/login', authController.login);
 authRoutes.get('/me', requireAuth, authController.getMe);
+authRoutes.post('/refresh', authController.refresh);
+authRoutes.post('/logout', authController.logout);

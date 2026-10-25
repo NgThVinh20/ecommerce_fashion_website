@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
-import { loginSchema, registerSchema } from './auth.schema';
+import { loginSchema, refreshSchema, registerSchema } from './auth.schema';
 import * as authService from './auth.service';
+
 
 export async function register(req: Request, res: Response) {
   const input = registerSchema.parse(req.body);
@@ -15,4 +16,15 @@ export async function login(req: Request, res: Response) {
 
 export async function getMe(req: Request, res: Response) {
   res.json({ data: await authService.getMe(req.user!.sub) });
+}
+
+export async function refresh(req: Request, res: Response) {
+  const { refreshToken } = refreshSchema.parse(req.body);
+  res.json({ data: await authService.refresh(refreshToken) });
+}
+
+export async function logout(req: Request, res: Response) {
+  const { refreshToken } = refreshSchema.parse(req.body);
+  await authService.logout(refreshToken);
+  res.status(204).end();
 }

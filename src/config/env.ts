@@ -7,11 +7,12 @@ import { z } from 'zod';
 // Khai báo các biến bắt buộc và kiểu dữ liệu 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().default(3000),            // .env luôn là chuỗi, coerce đổi sang số
-  DATABASE_URL: z.string().min(1),                    // Chuỗi kết nối PostgreSQL
-  REDIS_URL: z.string().min(1),                       // Chuỗi kết nối Redis
+  PORT: z.coerce.number().default(3000),           
+  DATABASE_URL: z.string().min(1),                    
+  REDIS_URL: z.string().min(1),                       
   JWT_SECRET: z.string().min(32, 'JWT_SECRET phải dài ít nhất 32 ký tự'),
-  JWT_EXPIRES_IN: z.string().default('15m'),         
+  JWT_EXPIRES_IN: z.string().default('15m'),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(7),         
 });
 
 const parsed = envSchema.safeParse(process.env);

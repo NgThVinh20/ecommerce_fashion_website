@@ -69,3 +69,6 @@ export function requireRole(...allowedRoles: UserRole[]) {
     next();
   };
 }
+
+// SELLER có toàn bộ quyền mua hàng của CUSTOMER
+export const BUYER_ROLES = ['CUSTOMER', 'SELLER'] as const;

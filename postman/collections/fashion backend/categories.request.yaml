@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/categories/5"
+method: GET
+body:
+  type: json
+  content: ""
+auth:
+  type: bearer
+  credentials:
+    token: "{{accessToken}}"
+scripts:
+  - type: afterResponse
+    code: if (pm.response.code === 201) pm.environment.set('catId', pm.response.json().data.id_category);
+    language: text/javascript
+order: 6000

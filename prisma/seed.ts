@@ -12,14 +12,18 @@ async function main() {
   }
 
   
+  const hash_password = await bcrypt.hash(password, 10);
   await prisma.user.upsert({
     where: { email },
-    update: {},
+    // Đã có: cập nhật mật khẩu theo .env và đảm bảo là admin đã xác thực email
+    update: { hash_password, role: 'ADMIN', email_verified: true },
+    // Chưa có: tạo mới
     create: {
       fullname: 'Quản trị viên',
       email,
-      hash_password: await bcrypt.hash(password, 10),
+      hash_password,
       role: 'ADMIN',
+      email_verified: true,
     },
   });
   console.log(`Đã có tài khoản admin: ${email}`);

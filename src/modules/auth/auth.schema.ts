@@ -16,5 +16,16 @@ export const loginSchema = z.object({
 export const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
+// Gửi lại mã xác thực email
+export const sendEmailOtpSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+});
+
+// Xác thực email: email + mã OTP đúng 6 chữ số
+export const verifyEmailOtpSchema = z.object({
+  email: z.string().trim().toLowerCase().email(),
+  otp: z.string().trim().regex(/^\d{6}$/, 'Mã OTP gồm 6 chữ số'),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

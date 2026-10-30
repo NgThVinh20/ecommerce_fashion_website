@@ -8,3 +8,13 @@ values:
     value: ''
   - key: catId
     value: ''
+  - key: sellerEmail
+    value: ''
+  - key: shopName
+    value: ''
+  - key: sellerToken
+    value: ''
+  - key: shopSlug
+    value: ''
+  - key: adminToken
+    value: ''

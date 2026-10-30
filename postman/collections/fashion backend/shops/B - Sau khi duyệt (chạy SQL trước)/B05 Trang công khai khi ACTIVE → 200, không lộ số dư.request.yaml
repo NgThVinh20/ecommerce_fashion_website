@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/shops/{{shopSlug}}"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Không có pending_balance', () => pm.expect(d).to.not.have.property('pending_balance'));
+      pm.test('Không có available_balance', () => pm.expect(d).to.not.have.property('available_balance'));
+      pm.test('Không có id_user', () => pm.expect(d).to.not.have.property('id_user'));
+    language: text/javascript
+order: 5000

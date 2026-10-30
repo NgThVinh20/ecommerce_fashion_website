@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/shop"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{sellerToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      pm.test('Trạng thái ACTIVE', () => pm.expect(pm.response.json().data.status).to.eql('ACTIVE'));
+    language: text/javascript
+order: 2000

@@ -17,7 +17,7 @@ const keys = (id_user: number) => ({
   attempts: `otp:att:${id_user}`, // đếm số lần nhập sai
 });
 
-// Chỉ lưu mã băm, không lưu mã gốc (giống refresh token)
+
 const hashOtp = (otp: string) => crypto.createHash('sha256').update(otp).digest('hex');
 
 interface OtpReceiver {
@@ -26,10 +26,9 @@ interface OtpReceiver {
   fullname: string;
 }
 
-/**
- * Sinh mã mới và gửi tới email.
- * Không ném lỗi khi chưa hết thời gian chờ: trả về { sent: false, retry_after } để nơi gọi tự quyết định.
- */
+
+ //Sinh mã mới và gửi tới email.
+ 
 export async function issueEmailOtp(user: OtpReceiver) {
   const k = keys(user.id_user);
 
@@ -39,7 +38,7 @@ export async function issueEmailOtp(user: OtpReceiver) {
     return { sent: false as const, retry_after: await redis.ttl(k.cooldown) };
   }
 
-  // Sinh mã 6 số ngẫu nhiên an toàn (000000 - 999999)
+  // Sinh mã 6 số ngẫu nhiên an toàn 
   const otp = crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
 
   // Lưu mã mới và xóa bộ đếm sai của mã cũ
@@ -62,13 +61,11 @@ export async function issueEmailOtp(user: OtpReceiver) {
 
   return {
     sent: true as const,
-    expires_in: OTP_TTL_SECONDS,
-    // Chỉ khi phát triển và chưa cấu hình SMTP: trả mã để test bằng Postman
-    ...(!isMailConfigured && env.NODE_ENV !== 'production' ? { dev_otp: otp } : {}),
+    expires_in: OTP_TTL_SECONDS
   };
 }
 
-/** Gửi lại mã. Luôn trả cùng một thông báo để không lộ email nào đã đăng ký. */
+//gửi lại mã
 export async function resendEmailOtp(email: string) {
   const message = 'Nếu email đã đăng ký và chưa xác thực, mã xác thực đã được gửi';
 

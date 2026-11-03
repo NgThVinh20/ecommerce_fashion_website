@@ -4,4 +4,4 @@ method: POST
 body:
   type: json
   content: '  { "refreshToken": "{{refreshToken}}" }'
-order: 5000
+order: 3000

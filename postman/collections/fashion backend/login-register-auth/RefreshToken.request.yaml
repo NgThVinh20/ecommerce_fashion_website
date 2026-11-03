@@ -3,7 +3,8 @@ url: "{{baseUrl}}/api/v1/auth/refresh"
 method: POST
 body:
   type: json
-  content: '   { "refreshToken": "e46d89da0b2af88c5f2673693ef5380485b99cc3bb359da861dc6b83ea3c26ac" }'
+  content: '   { "refreshToken":
+    "e46d89da0b2af88c5f2673693ef5380485b99cc3bb359da861dc6b83ea3c26ac" }'
 scripts:
   - type: afterResponse
     code: "  if (pm.response.code === 200) {\r

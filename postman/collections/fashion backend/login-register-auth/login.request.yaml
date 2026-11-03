@@ -6,9 +6,9 @@ body:
   type: json
   content: "{\r
 
-    \  \"email\": \"{emailadmin}\",\r
+    \  \"email\": \"az9vinh@gmail.com\",\r
 
-    \  \"password\": \"{password}\"\r
+    \  \"password\": \"Backendfashion123@\"\r
 
     }"
 scripts:

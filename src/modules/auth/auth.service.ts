@@ -7,9 +7,10 @@ import { env } from '../../config/env';
 import { signAccessToken } from '../../lib/jwt';
 import { AppError } from '../../middlewares/errorHandler';
 import type { LoginInput, RegisterInput } from './auth.schema';
+import { issueEmailOtp } from './otp.service';
 
 const publicUser = {
-  id_user: true, fullname: true, email: true, phone_number: true,
+  id_user: true, fullname: true, email: true, email_verified: true, phone_number: true,
   role: true, status: true, created_at: true,
 } as const;
 
@@ -26,18 +27,26 @@ async function issueTokens(id_user: number, role: UserRole) {
 
 export async function register(input: RegisterInput) {
   const existed = await prisma.user.findUnique({ where: { email: input.email } });
-  if (existed) throw new AppError(409, 'EMAIL_EXISTS', 'Email đã được sử dụng');
+  if (existed?.email_verified) throw new AppError(409, 'EMAIL_EXISTS', 'Email đã được sử dụng');
 
   const hash_password = await bcrypt.hash(input.password, 10);
-  return prisma.user.create({
-    data: {
-      fullname: input.fullname,
-      email: input.email,
-      phone_number: input.phone_number,
-      hash_password,
-    },
-    select: publicUser,
-  });
+  const data = { fullname: input.fullname, phone_number: input.phone_number, hash_password };
+
+  // Email đã đăng ký nhưng chưa xác thực: ghi đè thông tin (tài khoản đó chưa đăng nhập được,
+  // nên không ai giữ được email của người khác bằng cách đăng ký trước)
+  const user = existed
+    ? await prisma.user.update({ where: { id_user: existed.id_user }, data, select: publicUser })
+    : await prisma.user.create({ data: { ...data, email: input.email }, select: publicUser });
+
+  // Gửi mã xác thực ngay sau khi đăng ký
+  const otp = await issueEmailOtp(user);
+  const { sent, ...info } = otp;
+  return {
+    user,
+    verification: sent
+      ? { message: 'Đã gửi mã xác thực tới email', ...info }
+      : { message: `Mã vừa được gửi gần đây, vui lòng đợi ${otp.retry_after} giây rồi gửi lại`, ...info },
+  };
 }
 
 export async function login(input: LoginInput) {
@@ -45,6 +54,10 @@ export async function login(input: LoginInput) {
   const res = user && (await bcrypt.compare(input.password, user.hash_password));
   if (!user || !res) throw new AppError(401, 'INVALID_CREDENTIALS', 'Email hoặc mật khẩu không đúng');
   if (user.status === 'LOCKED') throw new AppError(403, 'ACCOUNT_LOCKED', 'Tài khoản đã bị khóa');
+  // Kiểm tra sau khi mật khẩu đúng, để người lạ không dò được email nào chưa xác thực
+  if (!user.email_verified) {
+    throw new AppError(403, 'EMAIL_NOT_VERIFIED', 'Vui lòng xác thực email trước khi đăng nhập');
+  }
 
   return issueTokens(user.id_user, user.role);
 }

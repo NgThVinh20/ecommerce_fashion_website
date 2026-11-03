@@ -6,13 +6,11 @@ body:
   type: json
   content: "{\r
 
-    \  \"fullname\": \"Nguyễn Văn A\",\r
+    \  \"fullname\": \"Nguyễn Thành Vinh\",\r
 
-    \  \"email\": \"B@gmail.com\",\r
+    \  \"email\": \"az9vinh@gmail.com\",\r
 
-    \  \"password\": \"12345679\",\r
-
-    \  \"phone_number\": \"091234567\"\r
+    \  \"password\": \"Backendfashion123@\"\r
 
     }"
 auth:

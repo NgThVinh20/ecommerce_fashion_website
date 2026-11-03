@@ -1,0 +1,3 @@
+$kind: collection
+name: login/register/auth
+order: 8000

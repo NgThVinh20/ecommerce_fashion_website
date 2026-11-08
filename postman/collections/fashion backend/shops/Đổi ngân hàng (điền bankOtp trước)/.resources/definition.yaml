@@ -1,0 +1,3 @@
+$kind: collection
+description: "Trước khi chạy: mở Gmail, copy mã OTP (thư 'Mã xác nhận đổi tài khoản ngân hàng') vào biến môi trường bankOtp. Mã hết hạn sau 5 phút."
+order: 3000

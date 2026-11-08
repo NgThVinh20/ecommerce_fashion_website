@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/shop/bank/otp"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 429', () => pm.response.to.have.status(429));
+      pm.test('Mã lỗi OTP_TOO_FREQUENT', () => pm.expect(pm.response.json().error.code).to.eql('OTP_TOO_FREQUENT'));
+    language: text/javascript
+order: 8000

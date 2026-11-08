@@ -61,6 +61,13 @@ model Shop {
   created_at        DateTime   @default(now())
   updated_at        DateTime   @updatedAt
   slug              String     @unique @db.VarChar(120)
+  tax_code            String?   @db.VarChar(14)  
+  bank_name           String?   @db.VarChar(100) 
+  bank_account_number String?   @db.VarChar(20)  
+  bank_account_name   String?   @db.VarChar(100) 
+  bank_updated_at     DateTime?                  
+  reject_reason       String?   @db.Text
+  name_updated_at     DateTime?    
   user User @relation(fields: [id_user], references: [id_user])
   
   @@map("shops")
@@ -80,3 +87,4 @@ model Category {
   @@unique([id_categories_parent, category_name])
   @@map("categories")
 }
+

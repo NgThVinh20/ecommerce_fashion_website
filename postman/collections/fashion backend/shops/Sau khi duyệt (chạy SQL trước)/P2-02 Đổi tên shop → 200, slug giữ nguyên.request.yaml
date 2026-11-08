@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/shop"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "shop_name": "{{newShopName}}"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Tên mới', () => pm.expect(d.shop_name).to.eql(pm.environment.get('newShopName')));
+      pm.test('Slug không đổi', () => pm.expect(d.slug).to.eql(pm.environment.get('shopSlug')));
+      pm.test('Có name_updated_at', () => pm.expect(d.name_updated_at).to.be.a('string'));
+    language: text/javascript
+  - type: beforeRequest
+    code: pm.environment.set('newShopName', `Vinh Store ${Date.now()}`);
+    language: text/javascript
+order: 2000

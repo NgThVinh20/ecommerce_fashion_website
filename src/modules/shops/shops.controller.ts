@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { registerShopSchema, slugParamSchema, updateShopSchema } from './shops.schema';
+import { registerShopSchema, slugParamSchema, updateBankSchema, updateShopSchema } from './shops.schema';
 import * as shopService from './shops.service';
 
 export async function register(req: Request, res: Response) {
@@ -22,5 +22,16 @@ export async function getSellerShop(req: Request, res: Response) {
 
 export async function updateSellerShop(req: Request, res: Response) {
   const input = updateShopSchema.parse(req.body);
-  res.json({ data: await shopService.update(req.shop!.id_shop, input) });
+  res.json({ data: await shopService.update(req.shop!, input) });
+}
+
+// Gửi mã OTP về email để đổi tài khoản ngân hàng
+export async function sendBankOtp(req: Request, res: Response) {
+  res.json({ data: await shopService.sendBankOtp(req.shop!, req.user!.sub) });
+}
+
+// Đổi tài khoản ngân hàng (cần mật khẩu + OTP)
+export async function updateBank(req: Request, res: Response) {
+  const input = updateBankSchema.parse(req.body);
+  res.json({ data: await shopService.updateBank(req.shop!, req.user!.sub, input) });
 }

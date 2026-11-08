@@ -1,7 +1,7 @@
 # Backend sàn thương mại điện tử thời trang
 
 Backend cho sàn thương mại điện tử thời trang nhiều người bán.
-Công nghệ: Express.js 5, TypeScript, PostgreSQL 16 (Prisma ORM), Redis 7.
+Công nghệ: Express.js 5, TypeScript, PostgreSQL 16 (Prisma ORM), Redis 7, Zod, Nodemailer (Gmail SMTP).
 
 ## Yêu cầu
 
@@ -24,6 +24,7 @@ docker compose up -d
 yarn prisma migrate deploy
 
 # 5. Tạo tài khoản admin (lấy từ ADMIN_EMAIL, ADMIN_PASSWORD trong .env)
+#    Chạy lại lệnh này sẽ cập nhật mật khẩu admin theo .env
 yarn prisma db seed
 
 # 6. Chạy server
@@ -72,26 +73,102 @@ Quy tắc: chỉ thay đổi cấu trúc bảng qua `schema.prisma` và migratio
 
 ## Biến môi trường
 
-Xem `.env.example`. Không đưa file `.env` lên Git.
+Xem `.env.example`. Không đưa file `.env` lên Git. Máy phát triển và máy chủ thật dùng **các giá trị bí mật khác nhau**.
+
+| Biến | Bắt buộc | Ý nghĩa |
+|---|---|---|
+| `DATABASE_URL` | Có | Chuỗi kết nối PostgreSQL (Docker dùng cổng 5433) |
+| `REDIS_URL` | Có | Chuỗi kết nối Redis |
+| `JWT_SECRET` | Có | Chuỗi bí mật ký access token, tối thiểu 32 ký tự |
+| `JWT_EXPIRES_IN` | Không (mặc định `15m`) | Thời hạn access token |
+| `REFRESH_TOKEN_TTL_DAYS` | Không (mặc định `7`) | Thời hạn refresh token (ngày) |
+| `PORT` | Không (mặc định `3000`) | Cổng chạy server |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Khi chạy seed | Tài khoản admin hệ thống |
+| `SMTP_USER`, `SMTP_PASS` | Không | Gmail và App Password 16 ký tự để gửi email |
+| `SMTP_HOST`, `SMTP_PORT` | Không (mặc định `smtp.gmail.com`, `465`) | Máy chủ gửi thư; mạng chặn cổng 465 thì dùng `587` |
+| `MAIL_FROM` | Không | Tên và địa chỉ người gửi, ví dụ `"Fashion Market <abc@gmail.com>"` |
+
+### Gửi email (OTP)
+
+- **Chưa khai báo** `SMTP_USER`, `SMTP_PASS`: khi phát triển, server không gửi thư mà in nội dung (có mã OTP) ra terminal. Khi chạy production thì báo lỗi.
+- **Gửi Gmail thật:** bật Xác minh 2 bước cho Gmail → tạo Mật khẩu ứng dụng tại myaccount.google.com/apppasswords → điền vào `SMTP_USER`, `SMTP_PASS` (bỏ dấu cách) → khởi động lại `yarn dev`.
 
 ## Cấu trúc thư mục
 
 ```
 src/
-├── config/        Đọc và kiểm tra biến môi trường
-├── lib/           Prisma, Redis, JWT
-├── middlewares/   Xác thực, phân quyền, xử lý lỗi
-└── modules/       Mỗi mô-đun: routes, controller, service, schema
+├── config/        Đọc và kiểm tra biến môi trường (env.ts)
+├── lib/           Prisma, Redis, JWT, gửi email (mailer), mã OTP (otp), tạo slug
+├── middlewares/   Xác thực, phân quyền, kiểm tra shop đang hoạt động, xử lý lỗi
+├── modules/       Mỗi mô-đun: routes, controller, service, schema
+│   ├── auth/        Đăng ký, đăng nhập, token, xác thực email
+│   ├── categories/  Loại mặt hàng của sàn
+│   └── shops/       Shop, hồ sơ người bán
+└── routes/        Gom route: index (/api/v1), admin (/admin), seller (/seller)
 prisma/            schema.prisma, migrations, seed.ts
 postman/           Bộ request kiểm thử API
 ```
 
+Các nhóm route:
+- `/admin/...`: kiểm tra đăng nhập và quyền ADMIN một lần cho cả nhóm.
+- `/seller/...`: kiểm tra đăng nhập, quyền SELLER và shop đang ACTIVE; `id_shop` lấy từ server, không nhận từ client.
+
+## Định dạng lỗi
+
+Mọi lỗi trả về dạng:
+
+```json
+{ "error": { "code": "SHOP_EXISTS", "message": "Tài khoản đã đăng ký gian hàng" } }
+```
+
+| Mã HTTP | Khi nào |
+|---|---|
+| 400 | Dữ liệu sai hình thức (`VALIDATION_ERROR`, kèm `details`), JSON hỏng (`INVALID_JSON`) |
+| 401 | Chưa đăng nhập, token sai hoặc hết hạn, sai email/mật khẩu |
+| 403 | Không đủ quyền, tài khoản bị khóa, email chưa xác thực, shop chưa được duyệt |
+| 404 | Không tìm thấy |
+| 409 | Trùng dữ liệu đã có (email, shop, tên shop, loại mặt hàng) |
+| 422 | Đúng hình thức nhưng vi phạm quy tắc nghiệp vụ (OTP sai/hết hạn, chưa đủ 30 ngày để đổi...) |
+| 429 | Gọi quá nhiều lần (gửi OTP liên tục, nhập sai OTP quá 5 lần) |
+| 500 | Lỗi hệ thống không lường trước |
+
 ## API hiện có
 
-| Phương thức | Đường dẫn | Yêu cầu đăng nhập |
-|---|---|---|
-| POST | /api/v1/auth/register | Không |
-| POST | /api/v1/auth/login | Không |
-| POST | /api/v1/auth/refresh | Không |
-| POST | /api/v1/auth/logout | Không |
-| GET | /api/v1/auth/me | Có |
+Tất cả có tiền tố `/api/v1`. Đường dẫn không tồn tại trả 404 `NOT_FOUND`.
+
+### Xác thực
+
+| Phương thức | Đường dẫn | Quyền | Chức năng |
+|---|---|---|---|
+| POST | /auth/register | Công khai | Đăng ký, tự gửi mã OTP về email |
+| POST | /auth/email/verify | Công khai | Nhập `{ email, otp }` để xác thực email |
+| POST | /auth/email/send-otp | Công khai | Gửi lại mã OTP (`{ email }`), tối đa 1 lần/phút |
+| POST | /auth/login | Công khai | Đăng nhập (email phải đã xác thực), trả access token + refresh token |
+| POST | /auth/refresh | Công khai | Đổi refresh token lấy cặp token mới |
+| POST | /auth/logout | Công khai | Hủy refresh token |
+| GET | /auth/me | Đã đăng nhập | Thông tin tài khoản |
+
+Mã OTP: 6 chữ số, hiệu lực 5 phút, sai tối đa 5 lần. Chưa xác thực email thì đăng nhập trả 403 `EMAIL_NOT_VERIFIED`.
+
+### Loại mặt hàng của sàn
+
+| Phương thức | Đường dẫn | Quyền | Chức năng |
+|---|---|---|---|
+| GET | /categories | Công khai | Cây loại mặt hàng (tối đa 3 cấp) |
+| POST | /admin/categories | ADMIN | Thêm loại mặt hàng |
+| PATCH | /admin/categories/:id | ADMIN | Sửa tên, tỷ lệ hoa hồng |
+| DELETE | /admin/categories/:id | ADMIN | Xóa (không xóa được khi còn loại con) |
+
+### Shop
+
+| Phương thức | Đường dẫn | Quyền | Chức năng |
+|---|---|---|---|
+| POST | /shops | CUSTOMER | Đăng ký mở shop (thông tin shop, mã số thuế, tài khoản ngân hàng), trạng thái PENDING |
+| GET | /shops/info | Đã đăng nhập | Xem shop của mình, kể cả khi chưa duyệt |
+| GET | /shops/:slug | Công khai | Trang công khai của shop (chỉ shop ACTIVE, không lộ số dư, ngân hàng) |
+| GET | /seller/shop | SELLER, shop ACTIVE | Xem shop đang quản lý |
+| PATCH | /seller/shop | SELLER, shop ACTIVE | Sửa mô tả, địa chỉ, số điện thoại; đổi tên shop tối đa 30 ngày/lần |
+| POST | /seller/shop/bank/otp | SELLER, shop ACTIVE | Gửi mã OTP về email để đổi tài khoản ngân hàng |
+| PATCH | /seller/shop/bank | SELLER, shop ACTIVE | Đổi tài khoản ngân hàng: cần mật khẩu + OTP, tối đa 30 ngày/lần, có email thông báo |
+
+

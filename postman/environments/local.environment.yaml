@@ -3,7 +3,7 @@ values:
   - key: baseUrl
     value: ''
   - key: accessToken
-    value: ''
+    secret: true
   - key: refreshToken
     value: ''
   - key: catId
@@ -13,8 +13,16 @@ values:
   - key: shopName
     value: ''
   - key: sellerToken
-    value: ''
+    secret: true
   - key: shopSlug
     value: ''
   - key: adminToken
+    secret: true
+  - key: myEmail
+    value: ''
+  - key: myPassword
+    secret: true
+  - key: bankOtp
+    value: ''
+  - key: otherShopName
     value: ''

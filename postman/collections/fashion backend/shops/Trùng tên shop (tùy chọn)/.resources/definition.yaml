@@ -1,0 +1,3 @@
+$kind: collection
+description: "Tùy chọn. Trước khi chạy: chạy SQL UPDATE shops SET name_updated_at = NULL; và đặt biến môi trường otherShopName = tên một shop khác đang có trong CSDL."
+order: 4000

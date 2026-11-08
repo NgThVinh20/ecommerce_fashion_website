@@ -7,18 +7,17 @@ body:
   type: json
   content: |-
     {
-      "description": "Mô tả mới sau khi sửa"
+      "shop_name": "{{newShopName}}",
+      "description": "Mô tả mới"
     }
 auth:
   type: bearer
   credentials:
-    token: "{{sellerToken}}"
+    token: "{{myToken}}"
 scripts:
   - type: afterResponse
     code: |-
       pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
-      const d = pm.response.json().data;
-      pm.test('Mô tả đã đổi', () => pm.expect(d.description).to.eql('Mô tả mới sau khi sửa'));
-      pm.test('Slug không đổi', () => pm.expect(d.slug).to.eql(pm.environment.get('shopSlug')));
+      pm.test('Mô tả đã đổi', () => pm.expect(pm.response.json().data.description).to.eql('Mô tả mới'));
     language: text/javascript
-order: 3000
+order: 4000

@@ -1,4 +1,5 @@
 $kind: http-request
+name: P1-02 Đăng ký shop thiếu mã số thuế, ngân hàng → 400
 url: "{{baseUrl}}/api/v1/shops"
 method: POST
 headers:
@@ -7,6 +8,7 @@ body:
   type: json
   content: |-
     {
+      "shop_name": "{{shopName}}",
       "description": "Shop quần áo nam nữ",
       "address": "Số 1 Nghiêm Xuân Yêm, Hoàng Mai, Hà Nội",
       "phone_number": "0912345678"
@@ -14,11 +16,16 @@ body:
 auth:
   type: bearer
   credentials:
-    token: "{{sellerToken}}"
+    token: "{{myToken}}"
 scripts:
   - type: afterResponse
     code: |-
       pm.test('Mã trạng thái 400', () => pm.response.to.have.status(400));
       pm.test('Mã lỗi VALIDATION_ERROR', () => pm.expect(pm.response.json().error.code).to.eql('VALIDATION_ERROR'));
+      const fields = pm.response.json().error.details.map(i => i.path.join('.'));
+      pm.test('Báo thiếu đủ 4 trường', () => pm.expect(fields).to.include.members(['tax_code','bank_name','bank_account_number','bank_account_name']));
     language: text/javascript
-order: 7000
+  - type: beforeRequest
+    code: pm.environment.set('shopName', `Thời Trang Vinh ${Date.now()}`);
+    language: text/javascript
+order: 2000

@@ -1,3 +1,0 @@
-$kind: collection
-description: "Trước khi chạy thư mục này: mở Postman Console (Ctrl+Alt+C), copy 2 câu SQL do request A04 in ra, chạy trong DBeaver để giả lập admin duyệt shop. Sau đó mới chạy B01."
-order: 2000

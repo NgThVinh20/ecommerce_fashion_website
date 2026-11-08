@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "{{myEmail}}",
+      "password": "{{myPassword}}"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      pm.environment.set('myToken', pm.response.json().data.accessToken);
+      const t = pm.response.json().data.accessToken;
+      const p = JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+      pm.test('Token mang role SELLER (sai: chưa chạy SQL duyệt)', () => pm.expect(p.role).to.eql('SELLER'));
+    language: text/javascript
+order: 1000

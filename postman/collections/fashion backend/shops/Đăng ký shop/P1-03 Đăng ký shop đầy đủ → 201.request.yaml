@@ -1,0 +1,38 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/shops"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "shop_name": "{{shopName}}",
+      "description": "Shop quần áo nam nữ",
+      "address": "Số 1 Nghiêm Xuân Yêm, Hoàng Mai, Hà Nội",
+      "phone_number": "0912345678",
+      "tax_code": "0123456789",
+      "bank_name": "Vietcombank",
+      "bank_account_number": "0123456789",
+      "bank_account_name": "Nguyễn Thành Vinh"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 201', () => pm.response.to.have.status(201));
+      const d = pm.response.json().data;
+      pm.test('Trạng thái PENDING', () => pm.expect(d.status).to.eql('PENDING'));
+      pm.test('Tên chủ TK in hoa, không dấu', () => pm.expect(d.bank_account_name).to.eql('NGUYEN THANH VINH'));
+      pm.test('Có mã số thuế', () => pm.expect(d.tax_code).to.eql('0123456789'));
+      pm.test('Chưa tính lần đổi ngân hàng / đổi tên', () => { pm.expect(d.bank_updated_at).to.eql(null); pm.expect(d.name_updated_at).to.eql(null); });
+      pm.environment.set('shopSlug', d.slug);
+      const e = pm.environment.get('myEmail');
+      console.log('Chạy SQL sau trong DBeaver để giả lập admin duyệt, rồi chạy thư mục P2:');
+      console.log(`UPDATE shops SET status = 'ACTIVE' WHERE id_user = (SELECT id_user FROM users WHERE email = '${e}');`);
+      console.log(`UPDATE users SET role = 'SELLER' WHERE email = '${e}';`);
+    language: text/javascript
+order: 3000

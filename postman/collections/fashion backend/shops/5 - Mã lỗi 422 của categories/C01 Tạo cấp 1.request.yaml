@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/categories"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "category_name": "Test cấp 1 {{catTs}}"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 201', () => pm.response.to.have.status(201));
+      pm.environment.set('cat1', pm.response.json().data.id_category);
+    language: text/javascript
+  - type: beforeRequest
+    code: pm.environment.set('catTs', Date.now());
+    language: text/javascript
+order: 1000

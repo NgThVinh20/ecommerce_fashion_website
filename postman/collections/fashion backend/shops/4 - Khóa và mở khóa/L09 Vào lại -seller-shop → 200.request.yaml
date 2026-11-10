@@ -1,0 +1,13 @@
+$kind: http-request
+name: L09 Vào lại /seller/shop → 200
+url: "{{baseUrl}}/api/v1/seller/shop"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 9000

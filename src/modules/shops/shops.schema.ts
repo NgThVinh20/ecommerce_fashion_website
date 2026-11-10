@@ -25,7 +25,7 @@ export const registerShopSchema = z.object({
   ...bankInfo,
 })
 
-// Sau khi duyệt: chỉ sửa mô tả, địa chỉ, số điện thoại (tên shop, mã số thuế phải liên hệ admin)
+// Sau khi duyệt: sửa tên shop (30 ngày 1 lần), mô tả, địa chỉ, số điện thoại. Mã số thuế phải liên hệ admin.
 export const updateShopSchema = z
   .object(shopInfo)
   .partial()
@@ -38,6 +38,30 @@ export const updateBankSchema = z.object({
   ...bankInfo,
 });
 
+// Sửa hồ sơ đăng ký khi shop đang chờ duyệt hoặc bị từ chối: gửi trường nào sửa trường đó (giống lúc đăng ký)
+export const updateApplicationSchema = registerShopSchema
+  .partial()
+  .refine((d) => Object.keys(d).length > 0, 'Cần ít nhất một trường để cập nhật');
+
+// ---------------- Admin ----------------
+
+export const shopIdParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+// GET /admin/shops?status=PENDING&q=vinh&page=1&limit=20
+export const listShopsQuerySchema = z.object({
+  status: z.enum(['PENDING', 'ACTIVE', 'REJECTED', 'LOCKED']).optional(),
+  q: z.string().trim().min(1).max(100).optional(), // tìm theo tên shop hoặc email chủ shop
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+// Lý do từ chối / khóa shop
+export const reasonSchema = z.object({
+  reason: z.string().trim().min(5, 'Lý do tối thiểu 5 ký tự').max(500),
+});
+
 export const slugParamSchema = z.object({
   slug: z.string().min(1).max(120),
 });
@@ -45,3 +69,5 @@ export const slugParamSchema = z.object({
 export type RegisterShopInput = z.infer<typeof registerShopSchema>;
 export type UpdateShopInput = z.infer<typeof updateShopSchema>;
 export type UpdateBankInput = z.infer<typeof updateBankSchema>;
+export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
+export type ListShopsQuery = z.infer<typeof listShopsQuerySchema>;

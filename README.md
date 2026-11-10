@@ -127,8 +127,8 @@ Mọi lỗi trả về dạng:
 | 401 | Chưa đăng nhập, token sai hoặc hết hạn, sai email/mật khẩu |
 | 403 | Không đủ quyền, tài khoản bị khóa, email chưa xác thực, shop chưa được duyệt |
 | 404 | Không tìm thấy |
-| 409 | Trùng dữ liệu đã có (email, shop, tên shop, loại mặt hàng) |
-| 422 | Đúng hình thức nhưng vi phạm quy tắc nghiệp vụ (OTP sai/hết hạn, chưa đủ 30 ngày để đổi...) |
+| 409 | Trùng dữ liệu đã có (email, shop, tên shop, loại mặt hàng), hoặc dữ liệu vừa bị thay đổi bởi người khác |
+| 422 | Đúng hình thức nhưng vi phạm quy tắc nghiệp vụ (OTP sai/hết hạn, chưa đủ 30 ngày để đổi, duyệt shop không ở trạng thái chờ, quá 3 cấp loại mặt hàng...) |
 | 429 | Gọi quá nhiều lần (gửi OTP liên tục, nhập sai OTP quá 5 lần) |
 | 500 | Lỗi hệ thống không lường trước |
 
@@ -164,11 +164,25 @@ Mã OTP: 6 chữ số, hiệu lực 5 phút, sai tối đa 5 lần. Chưa xác t
 | Phương thức | Đường dẫn | Quyền | Chức năng |
 |---|---|---|---|
 | POST | /shops | CUSTOMER | Đăng ký mở shop (thông tin shop, mã số thuế, tài khoản ngân hàng), trạng thái PENDING |
-| GET | /shops/info | Đã đăng nhập | Xem shop của mình, kể cả khi chưa duyệt |
+| GET | /shops/info | Đã đăng nhập | Xem shop của mình, kể cả khi chưa duyệt (kèm lý do từ chối / khóa nếu có) |
+| PATCH | /shops/info | CUSTOMER | Sửa hồ sơ đăng ký khi đang chờ duyệt; nếu đang bị từ chối thì sửa xong tự gửi lại (về PENDING) |
 | GET | /shops/:slug | Công khai | Trang công khai của shop (chỉ shop ACTIVE, không lộ số dư, ngân hàng) |
 | GET | /seller/shop | SELLER, shop ACTIVE | Xem shop đang quản lý |
 | PATCH | /seller/shop | SELLER, shop ACTIVE | Sửa mô tả, địa chỉ, số điện thoại; đổi tên shop tối đa 30 ngày/lần |
 | POST | /seller/shop/bank/otp | SELLER, shop ACTIVE | Gửi mã OTP về email để đổi tài khoản ngân hàng |
 | PATCH | /seller/shop/bank | SELLER, shop ACTIVE | Đổi tài khoản ngân hàng: cần mật khẩu + OTP, tối đa 30 ngày/lần, có email thông báo |
+
+### Admin quản lý shop
+
+| Phương thức | Đường dẫn | Quyền | Chức năng |
+|---|---|---|---|
+| GET | /admin/shops?status=&q=&page=&limit= | ADMIN | Danh sách shop: lọc trạng thái, tìm theo tên shop / email chủ shop, phân trang |
+| GET | /admin/shops/:id | ADMIN | Hồ sơ đầy đủ (mã số thuế, ngân hàng, chủ shop) |
+| PATCH | /admin/shops/:id/approve | ADMIN | Duyệt: shop ACTIVE, chủ shop thành SELLER (một transaction) |
+| PATCH | /admin/shops/:id/reject | ADMIN | Từ chối, bắt buộc `reason` (5–500 ký tự) |
+| PATCH | /admin/shops/:id/lock | ADMIN | Khóa shop đang hoạt động, bắt buộc `reason` |
+| PATCH | /admin/shops/:id/unlock | ADMIN | Mở khóa |
+
+Mỗi lần duyệt, từ chối, khóa, mở khóa đều gửi email cho chủ shop. Đổi trạng thái dùng cập nhật có điều kiện: hai admin thao tác cùng lúc thì chỉ một người thành công, người còn lại nhận 422.
 
 

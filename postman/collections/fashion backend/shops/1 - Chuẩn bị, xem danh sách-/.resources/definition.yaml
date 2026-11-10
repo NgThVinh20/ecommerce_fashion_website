@@ -1,0 +1,4 @@
+$kind: collection
+name: "1 - Chuẩn bị, xem danh sách:"
+description: Đăng nhập admin và chủ shop; admin xem danh sách shop chờ duyệt, tìm theo email, xem hồ sơ chi tiết; kiểm tra phân quyền (401, 403) và dữ liệu sai (400, 404)
+order: 1000

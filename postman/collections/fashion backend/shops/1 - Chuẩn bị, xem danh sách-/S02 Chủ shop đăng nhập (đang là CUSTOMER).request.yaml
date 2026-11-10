@@ -16,9 +16,9 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
-      pm.environment.set('myToken', pm.response.json().data.accessToken);
       const t = pm.response.json().data.accessToken;
+      pm.environment.set('myToken', t);
       const p = JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-      pm.test('Token mang role SELLER (sai: chưa chạy SQL duyệt)', () => pm.expect(p.role).to.eql('SELLER'));
+      pm.test('Token mang role CUSTOMER', () => pm.expect(p.role).to.eql('CUSTOMER'));
     language: text/javascript
-order: 1000
+order: 2000

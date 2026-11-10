@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/shops/{{shopId}}/lock"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "reason": "Vi phạm chính sách đăng bán"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Trạng thái LOCKED', () => pm.expect(d.status).to.eql('LOCKED'));
+      pm.test('Lưu lý do khóa', () => pm.expect(d.lock_reason).to.eql('Vi phạm chính sách đăng bán'));
+    language: text/javascript
+order: 2000

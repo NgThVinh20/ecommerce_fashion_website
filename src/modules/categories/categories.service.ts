@@ -44,7 +44,7 @@ export async function create(input: CreateCategoryInput) {
     if (!parent) throw new AppError(404, 'PARENT_NOT_FOUND', 'Không tìm thấy loại mặt hàng cha');
     level = parent.level + 1;
     if (level > MAX_LEVEL) {
-      throw new AppError(400, 'MAX_LEVEL_EXCEEDED', `Chỉ cho phép tối đa ${MAX_LEVEL} cấp`);
+      throw new AppError(422, 'MAX_LEVEL_EXCEEDED', `Chỉ cho phép tối đa ${MAX_LEVEL} cấp`);
     }
   }
   await UniqueName(parentId, input.category_name);
@@ -70,7 +70,7 @@ export async function remove(id: number) {
   await findOrThrow(id);
   const childCount = await prisma.category.count({ where: { id_categories_parent: id } });
   if (childCount > 0) {
-    throw new AppError(409, 'CATEGORY_HAS_CHILDREN', 'Không thể xóa loại mặt hàng đang có loại con');
+    throw new AppError(422, 'CATEGORY_HAS_CHILDREN', 'Không thể xóa loại mặt hàng đang có loại con');
   }
   await prisma.category.delete({ where: { id_category: id } });
 }

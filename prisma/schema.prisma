@@ -67,6 +67,7 @@ model Shop {
   bank_account_name   String?   @db.VarChar(100) 
   bank_updated_at     DateTime?                  
   reject_reason       String?   @db.Text
+  lock_reason         String?   @db.Text         // lý do admin khóa shop
   name_updated_at     DateTime?    
   user User @relation(fields: [id_user], references: [id_user])
   

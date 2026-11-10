@@ -1,6 +1,3 @@
 $kind: collection
-description: "Trước khi chạy: nếu tài khoản đã có shop, xóa trong DBeaver:
-  DELETE FROM shops WHERE id_user = (SELECT id_user FROM users WHERE email =
-  '<email của bạn>'); Chạy xong P1-03, copy 2 câu SQL trong Postman Console
-  (Ctrl+Alt+C) để duyệt shop."
+description: "Trước khi chạy: nếu tài khoản đã có shop, xóa trong DBeaver: DELETE FROM shops WHERE id_user = (SELECT id_user FROM users WHERE email = ''); Chạy xong P1-03, copy 2 câu SQL trong Postman Console (Ctrl+Alt+C) để duyệt shop."
 order: 1710

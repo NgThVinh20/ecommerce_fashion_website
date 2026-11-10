@@ -1,0 +1,19 @@
+$kind: http-request
+name: S10 Xem hồ sơ → 200, có mã số thuế, ngân hàng, chủ shop
+url: "{{baseUrl}}/api/v1/admin/shops/{{shopId}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Có tax_code', () => pm.expect(d.tax_code).to.be.a('string'));
+      pm.test('Có bank_account_number', () => pm.expect(d.bank_account_number).to.be.a('string'));
+      pm.test('Có email chủ shop', () => pm.expect(d.user.email).to.eql(pm.environment.get('myEmail')));
+      pm.test('Không lộ mật khẩu chủ shop', () => pm.expect(d.user).to.not.have.property('hash_password'));
+    language: text/javascript
+order: 10000

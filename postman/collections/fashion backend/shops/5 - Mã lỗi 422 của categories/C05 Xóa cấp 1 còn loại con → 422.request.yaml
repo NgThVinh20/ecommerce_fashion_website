@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/categories/{{cat1}}"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 422', () => pm.response.to.have.status(422));
+      pm.test('Mã lỗi CATEGORY_HAS_CHILDREN', () => pm.expect(pm.response.json().error.code).to.eql('CATEGORY_HAS_CHILDREN'));
+    language: text/javascript
+order: 5000

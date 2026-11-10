@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
-import { registerShopSchema, slugParamSchema, updateBankSchema, updateShopSchema } from './shops.schema';
+import {
+  registerShopSchema, slugParamSchema, updateApplicationSchema, updateBankSchema, updateShopSchema,
+} from './shops.schema';
 import * as shopService from './shops.service';
 
 export async function register(req: Request, res: Response) {
@@ -34,4 +36,10 @@ export async function sendBankOtp(req: Request, res: Response) {
 export async function updateBank(req: Request, res: Response) {
   const input = updateBankSchema.parse(req.body);
   res.json({ data: await shopService.updateBank(req.shop!, req.user!.sub, input) });
+}
+
+// Sửa hồ sơ đăng ký khi chờ duyệt / bị từ chối (bị từ chối thì tự gửi lại)
+export async function updateApplication(req: Request, res: Response) {
+  const input = updateApplicationSchema.parse(req.body);
+  res.json({ data: await shopService.updateApplication(req.user!.sub, input) });
 }

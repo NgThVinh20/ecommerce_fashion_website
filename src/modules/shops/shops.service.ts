@@ -5,7 +5,7 @@ import { slugify } from '../../lib/slug';
 import { sendMail } from '../../lib/mailer';
 import { consumeOtp, issueOtp } from '../../lib/otp';
 import { AppError } from '../../middlewares/errorHandler';
-import type { RegisterShopInput, UpdateBankInput, UpdateShopInput } from './shops.schema';
+import type { RegisterShopInput, UpdateApplicationInput, UpdateBankInput, UpdateShopInput } from './shops.schema';
 
 const BANK_UPDATE_INTERVAL_DAYS = 30; 
 const SHOP_RENAME_INTERVAL_DAYS = 30; 
@@ -68,6 +68,44 @@ export async function update(shop: Shop, input: UpdateShopInput) {
     data.name_updated_at = new Date(); // slug giữ nguyên để link cũ của shop không bị hỏng
   }
   return prisma.shop.update({ where: { id_shop: shop.id_shop }, data });
+}
+
+// Sửa hồ sơ đăng ký (PATCH /shops/info) khi shop chưa được duyệt:
+// - PENDING: chỉ sửa thông tin, vẫn chờ duyệt
+// - REJECTED: sửa xong tự chuyển về PENDING để admin duyệt lại (gửi lại hồ sơ)
+// Shop chưa từng hoạt động nên không áp dụng quy tắc 30 ngày; slug giữ nguyên.
+export async function updateApplication(id_user: number, input: UpdateApplicationInput) {
+  const shop = await prisma.shop.findUnique({ where: { id_user } });
+  if (!shop) throw new AppError(404, 'SHOP_NOT_FOUND', 'Bạn chưa đăng ký gian hàng');
+  if (shop.status !== 'PENDING' && shop.status !== 'REJECTED') {
+    throw new AppError(
+      422,
+      'SHOP_NOT_EDITABLE',
+      'Gian hàng đã được duyệt, vui lòng sửa thông tin trong trang quản lý gian hàng',
+    );
+  }
+
+  if (input.shop_name && input.shop_name !== shop.shop_name) {
+    const existName = await prisma.shop.findUnique({ where: { shop_name: input.shop_name } });
+    if (existName) throw new AppError(409, 'SHOP_NAME_EXISTS', 'Tên shop đã được sử dụng');
+  }
+
+  const data: Prisma.ShopUpdateManyMutationInput = { ...input };
+  if (shop.status === 'REJECTED') {
+    data.status = 'PENDING';  // gửi lại hồ sơ
+    data.reject_reason = null;
+  }
+
+  // Cập nhật có điều kiện: chỉ đổi khi trạng thái chưa thay đổi kể từ lúc đọc
+  // (ví dụ admin vừa duyệt / từ chối đúng lúc người bán đang sửa)
+  const result = await prisma.shop.updateMany({
+    where: { id_shop: shop.id_shop, status: shop.status },
+    data,
+  });
+  if (result.count === 0) {
+    throw new AppError(409, 'SHOP_STATUS_CHANGED', 'Trạng thái gian hàng vừa thay đổi, vui lòng tải lại và thử lại');
+  }
+  return prisma.shop.findUniqueOrThrow({ where: { id_shop: shop.id_shop } });
 }
 
 // Đổi tài khoản ngân hàng 

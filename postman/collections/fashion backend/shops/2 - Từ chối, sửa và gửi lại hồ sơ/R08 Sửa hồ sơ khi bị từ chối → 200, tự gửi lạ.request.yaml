@@ -1,0 +1,27 @@
+$kind: http-request
+name: R08 Sửa hồ sơ khi bị từ chối → 200, tự gửi lại (PENDING)
+url: "{{baseUrl}}/api/v1/shops/info"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "bank_account_name": "Nguyễn Thành Vinh",
+      "description": "Đã cập nhật hồ sơ"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Trạng thái PENDING', () => pm.expect(d.status).to.eql('PENDING'));
+      pm.test('Xóa reject_reason', () => pm.expect(d.reject_reason).to.eql(null));
+      pm.test('Slug giữ nguyên', () => pm.expect(d.slug).to.eql(pm.environment.get('shopSlug')));
+    language: text/javascript
+order: 8000

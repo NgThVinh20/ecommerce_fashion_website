@@ -26,3 +26,11 @@ values:
     value: ''
   - key: otherShopName
     value: ''
+  - key: myToken
+    secret: true
+  - key: adminEmail
+    secret: true
+  - key: adminPassword
+    secret: true
+  - key: shopId
+    value: ''

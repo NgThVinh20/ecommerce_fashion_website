@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: product_name
+      value: Áo khác
+    - type: text
+      key: id_category
+      value: "{{leafCat}}"
+    - type: text
+      key: description
+      value: Áo thun 100% cotton
+    - type: text
+      key: attributes
+      value: '{"Chất liệu": "Cotton", "Xuất xứ": "Việt Nam"}'
+    - type: text
+      key: skus
+      value: '[{"sku_code": "AT-{{ts}}-DO-M", "size": "M", "color": "Đỏ", "price": 199000, "stock": 10}, {"sku_code": "AT-{{ts}}-DO-L", "size": "L", "color": "Đỏ", "price": 209000, "stock": 5}]'
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 409', () => pm.response.to.have.status(409));
+      pm.test('Mã lỗi SKU_CODE_EXISTS', () => pm.expect(pm.response.json().error.code).to.eql('SKU_CODE_EXISTS'));
+    language: text/javascript
+order: 9000

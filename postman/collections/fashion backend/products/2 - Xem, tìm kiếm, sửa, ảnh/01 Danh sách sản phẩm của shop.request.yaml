@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const b = pm.response.json();
+      pm.test('Có meta', () => pm.expect(b.meta).to.include.keys('page','limit','total','total_pages'));
+      pm.test('Có sản phẩm vừa tạo', () => pm.expect(b.data.map(p => p.id_product)).to.include(Number(pm.environment.get('productId'))));
+    language: text/javascript
+order: 1000

@@ -34,3 +34,27 @@ values:
     secret: true
   - key: shopId
     value: ''
+  - key: ts
+    value: ''
+  - key: catL1
+    value: ''
+  - key: catL2
+    value: ''
+  - key: catL3
+    value: ''
+  - key: parentCat
+    value: ''
+  - key: catL1b
+    value: ''
+  - key: catL2c
+    value: ''
+  - key: leafCat
+    value: ''
+  - key: productId
+    value: ''
+  - key: skuId
+    value: ''
+  - key: productImg
+    value: ''
+  - key: skuId3
+    value: ''

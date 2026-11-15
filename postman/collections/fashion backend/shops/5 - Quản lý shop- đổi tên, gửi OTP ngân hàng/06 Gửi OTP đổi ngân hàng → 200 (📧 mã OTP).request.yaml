@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/shop/bank/otp"
+method: POST
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      console.log('Mở Gmail, copy mã OTP vào biến môi trường bankOtp, rồi chạy thư mục 6.');
+    language: text/javascript
+order: 6000

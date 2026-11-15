@@ -1,0 +1,36 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/categories"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "category_name": "Con tạm",
+      "id_categories_parent": {{tmpL1}}
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const code = pm.response.code;
+      pm.test('Tạo mới (201) hoặc đã có từ lần trước (409)', () => pm.expect([201, 409]).to.include(code));
+      const NAME = "Con tạm", PARENT_KEY = "tmpL1", SAVE = ["tmpL2"];
+      const parentId = PARENT_KEY ? Number(pm.environment.get(PARENT_KEY)) : null;
+      if (code === 201) {
+        const d = pm.response.json().data;
+        SAVE.forEach(k => pm.environment.set(k, d.id_category));
+      } else {
+        pm.sendRequest(pm.environment.get('baseUrl') + '/api/v1/categories', (err, res) => {
+          const find = (list) => { for (const n of list) { if (n.category_name === NAME && (n.id_categories_parent ?? null) === parentId) return n; const f = find(n.children || []); if (f) return f; } return null; };
+          const n = err ? null : find(res.json().data);
+          pm.test('Dùng lại danh mục đã có: ' + NAME, () => pm.expect(n).to.be.an('object'));
+          if (n) SAVE.forEach(k => pm.environment.set(k, n.id_category));
+        });
+      }
+    language: text/javascript
+order: 2000

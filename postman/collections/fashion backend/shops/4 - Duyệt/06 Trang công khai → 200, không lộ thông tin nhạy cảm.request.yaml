@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/shops/{{shopSlug}}"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Không có tax_code', () => pm.expect(d).to.not.have.property('tax_code'));
+      pm.test('Không có bank_name', () => pm.expect(d).to.not.have.property('bank_name'));
+      pm.test('Không có bank_account_number', () => pm.expect(d).to.not.have.property('bank_account_number'));
+      pm.test('Không có bank_account_name', () => pm.expect(d).to.not.have.property('bank_account_name'));
+      pm.test('Không có pending_balance', () => pm.expect(d).to.not.have.property('pending_balance'));
+      pm.test('Không có available_balance', () => pm.expect(d).to.not.have.property('available_balance'));
+      pm.test('Không có id_user', () => pm.expect(d).to.not.have.property('id_user'));
+      pm.test('Không có reject_reason', () => pm.expect(d).to.not.have.property('reject_reason'));
+      pm.test('Không có lock_reason', () => pm.expect(d).to.not.have.property('lock_reason'));
+    language: text/javascript
+order: 6000

@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: text
+      key: keep_images
+      value: '["https://res.cloudinary.com/khac/image/upload/a.jpg"]'
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 400', () => pm.response.to.have.status(400));
+      pm.test('Mã lỗi INVALID_KEEP_IMAGE', () => pm.expect(pm.response.json().error.code).to.eql('INVALID_KEEP_IMAGE'));
+    language: text/javascript
+order: 10000

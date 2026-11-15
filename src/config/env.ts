@@ -20,6 +20,11 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   MAIL_FROM: z.string().optional(),
+
+  // Cloudinary: lưu ảnh sản phẩm (lấy ở trang Dashboard của Cloudinary)
+  CLOUDINARY_CLOUD_NAME: z.string().min(1, 'Thiếu CLOUDINARY_CLOUD_NAME'),
+  CLOUDINARY_API_KEY: z.string().min(1, 'Thiếu CLOUDINARY_API_KEY'),
+  CLOUDINARY_API_SECRET: z.string().min(1, 'Thiếu CLOUDINARY_API_SECRET'),
 });
 
 const parsed = envSchema.safeParse(process.env);

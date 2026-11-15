@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/categories"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const find = (list, id) => { for (const n of list) { if (n.id_category === id) return n; const f = find(n.children || [], id); if (f) return f; } return null; };
+      const tree = pm.response.json().data;
+      ['tmpL1','tmpL2'].forEach(k => pm.test(k + ' đã bị xóa', () => pm.expect(find(tree, Number(pm.environment.get(k)))).to.eql(null)));
+      ['catL1','catL1b','catL2','catL2b','catL2c','catL3'].forEach(k => pm.test(k + ' vẫn còn', () => pm.expect(find(tree, Number(pm.environment.get(k)))).to.be.an('object')));
+      pm.test('leafCat sẵn sàng cho bộ products', () => pm.expect(pm.environment.get('leafCat')).to.eql(pm.environment.get('catL2c')));
+    language: text/javascript
+order: 9000

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAuth, requireRole } from '../middlewares/auth';
 import { adminCategoryRoutes } from '../modules/categories/categories.routes';
 import { adminShopRoutes } from '../modules/shops/shop.route';
+import { adminProductRoutes } from '../modules/products/products.routes';
 
 export const adminRoutes = Router();
 
@@ -10,3 +11,4 @@ adminRoutes.use(requireAuth, requireRole('ADMIN'));
 
 adminRoutes.use('/categories', adminCategoryRoutes);
 adminRoutes.use('/shops', adminShopRoutes);
+adminRoutes.use('/products', adminProductRoutes);

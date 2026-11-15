@@ -1,0 +1,21 @@
+$kind: http-request
+name: 09 Bỏ hết ảnh (keep_images rỗng, không ảnh mới) → 400
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: text
+      key: keep_images
+      value: "[]"
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 400', () => pm.response.to.have.status(400));
+      pm.test('Mã lỗi IMAGE_COUNT_INVALID', () => pm.expect(pm.response.json().error.code).to.eql('IMAGE_COUNT_INVALID'));
+    language: text/javascript
+order: 9000

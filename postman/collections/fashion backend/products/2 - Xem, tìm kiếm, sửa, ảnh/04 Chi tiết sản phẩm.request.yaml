@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Có biến thể và loại mặt hàng', () => { pm.expect(d.skus).to.have.length(2); pm.expect(d.category.id_category).to.eql(Number(pm.environment.get('leafCat'))); });
+    language: text/javascript
+order: 4000

@@ -46,6 +46,11 @@ export async function create(input: CreateCategoryInput) {
     if (level > MAX_LEVEL) {
       throw new AppError(422, 'MAX_LEVEL_EXCEEDED', `Chỉ cho phép tối đa ${MAX_LEVEL} cấp`);
     }
+    // Loại cha đang có sản phẩm thì không thêm loại con (sản phẩm chỉ gắn vào loại cấp cuối)
+    const productCount = await prisma.product.count({ where: { id_category: parentId } });
+    if (productCount > 0) {
+      throw new AppError(422, 'CATEGORY_HAS_PRODUCTS', 'Loại mặt hàng cha đang có sản phẩm, không thể thêm loại con');
+    }
   }
   await UniqueName(parentId, input.category_name);
   return prisma.category.create({
@@ -71,6 +76,11 @@ export async function remove(id: number) {
   const childCount = await prisma.category.count({ where: { id_categories_parent: id } });
   if (childCount > 0) {
     throw new AppError(422, 'CATEGORY_HAS_CHILDREN', 'Không thể xóa loại mặt hàng đang có loại con');
+  }
+  // Kể cả sản phẩm đã xóa mềm vẫn tham chiếu tới loại này
+  const productCount = await prisma.product.count({ where: { id_category: id } });
+  if (productCount > 0) {
+    throw new AppError(422, 'CATEGORY_HAS_PRODUCTS', 'Không thể xóa loại mặt hàng đang có sản phẩm');
   }
   await prisma.category.delete({ where: { id_category: id } });
 }

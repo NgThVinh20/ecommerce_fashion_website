@@ -1,0 +1,26 @@
+$kind: http-request
+name: 11 Giữ ảnh cũ + thêm ảnh mới → 2 ảnh (CHỌN ẢNH ở trường images)
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: text
+      key: keep_images
+      value: '["{{productImg}}"]'
+    - type: file
+      key: images
+      src: []
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Có 2 ảnh', () => pm.expect(d.images).to.have.length(2));
+      pm.test('Ảnh cũ đứng đầu', () => pm.expect(d.images[0]).to.eql(pm.environment.get('productImg')));
+    language: text/javascript
+order: 11000

@@ -70,7 +70,8 @@ model Shop {
   lock_reason         String?   @db.Text         // lý do admin khóa shop
   name_updated_at     DateTime?    
   user User @relation(fields: [id_user], references: [id_user])
-  
+  products Product[]
+
   @@map("shops")
 }
 // bảng categories
@@ -84,8 +85,68 @@ model Category {
 
   parent   Category?  @relation("CategoryTree", fields: [id_categories_parent], references: [id_category], onDelete: Restrict)
   children Category[] @relation("CategoryTree")
+  products Product[]
 
   @@unique([id_categories_parent, category_name])
   @@map("categories")
+}
+
+// trạng thái sản phẩm
+enum ProductStatus {
+  ACTIVE   // đang bán
+  HIDDEN   // người bán tự ẩn
+  BANNED   // admin cấm vì vi phạm (người bán không tự hiện lại được)
+  DELETED  // người bán xóa (xóa mềm, đơn hàng cũ vẫn tham chiếu được)
+}
+
+// bảng products
+model Product {
+  id_product     Int           @id @default(autoincrement())
+  id_shop        Int
+  id_category    Int                                   // loại mặt hàng cấp cuối
+  product_name   String        @db.VarChar(200)
+  search_name    String        @db.VarChar(200)        // tên không dấu, chữ thường để tìm kiếm
+  description    String?       @db.Text
+  attributes     Json?                                 // thuộc tính chung: { "Chất liệu": "Cotton", ... }
+  images         String[]                              // URL ảnh Cloudinary, ảnh đầu là ảnh bìa
+  status         ProductStatus @default(ACTIVE)
+  ban_reason     String?       @db.Text                // lý do admin cấm
+  min_price      Decimal?      @db.Decimal(15, 0)      // giá thấp nhất trong các SKU đang bán
+  max_price      Decimal?      @db.Decimal(15, 0)      // giá cao nhất trong các SKU đang bán
+  sold_count     Int           @default(0)             // lượt bán (cộng khi đơn giao thành công)
+  is_featured    Boolean       @default(false)         // sản phẩm nổi bật của shop
+  featured_order Int?                                  // thứ tự hiển thị trong khối nổi bật
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  shop     Shop     @relation(fields: [id_shop], references: [id_shop], onDelete: Restrict)
+  category Category @relation(fields: [id_category], references: [id_category], onDelete: Restrict)
+  skus     Sku[]
+
+  @@index([id_shop, status])
+  @@index([id_category, status])
+  @@index([status, created_at])
+  @@index([sold_count])
+  @@map("products")
+}
+
+// bảng skus: biến thể theo size và màu
+model Sku {
+  id_sku     Int      @id @default(autoincrement())
+  id_product Int
+  sku_code   String   @db.VarChar(50)                  // mã do người bán đặt, không trùng trong cùng shop
+  size       String   @db.VarChar(20)
+  color      String   @db.VarChar(50)
+  price      Decimal  @db.Decimal(15, 0)               // CHECK > 0 (thêm trong migration)
+  stock      Int      @default(0)                      // tồn kho, CHECK >= 0 (thêm trong migration)
+  image_url  String?  @db.VarChar(500)                 // ảnh riêng theo màu
+  is_active  Boolean  @default(true)                   // false = ngừng bán biến thể này
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  product Product @relation(fields: [id_product], references: [id_product], onDelete: Restrict)
+
+  @@unique([id_product, size, color])
+  @@map("skus")
 }
 

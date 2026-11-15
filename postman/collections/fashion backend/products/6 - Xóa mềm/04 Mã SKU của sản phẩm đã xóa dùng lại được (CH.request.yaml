@@ -1,0 +1,36 @@
+$kind: http-request
+name: 04 Mã SKU của sản phẩm đã xóa dùng lại được (CHỌN ẢNH ở trường images)
+url: "{{baseUrl}}/api/v1/seller/products"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: product_name
+      value: Áo dùng lại mã
+    - type: text
+      key: id_category
+      value: "{{leafCat}}"
+    - type: text
+      key: description
+      value: Áo thun 100% cotton
+    - type: text
+      key: attributes
+      value: '{"Chất liệu": "Cotton", "Xuất xứ": "Việt Nam"}'
+    - type: text
+      key: skus
+      value: '[{"sku_code": "AT-{{ts}}-DO-M", "size": "M", "color": "Đỏ", "price": 199000, "stock": 10}, {"sku_code": "AT-{{ts}}-DO-L", "size": "L", "color": "Đỏ", "price": 209000, "stock": 5}]'
+    - type: file
+      key: images
+      src: []
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 201', () => pm.response.to.have.status(201));
+      pm.environment.set('productId2', pm.response.json().data.id_product);
+    language: text/javascript
+order: 4000

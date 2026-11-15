@@ -1,0 +1,13 @@
+$kind: http-request
+name: "05 Dọn dẹp: xóa sản phẩm vừa tạo"
+url: "{{baseUrl}}/api/v1/seller/products/{{productId2}}"
+method: DELETE
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Mã trạng thái 204', () => pm.response.to.have.status(204));
+    language: text/javascript
+order: 5000

@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('min_price = 149000', () => pm.expect(d.min_price).to.eql('149000'));
+    language: text/javascript
+order: 6000

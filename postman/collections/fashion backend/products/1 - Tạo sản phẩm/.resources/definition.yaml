@@ -1,0 +1,3 @@
+$kind: collection
+description: "Trước khi chạy lần đầu: chọn 1 ảnh JPG / PNG cho các request có ghi CHỌN ẢNH (tab Body, dòng file, nút Select Files): 1-08, 2-11, 3-08, 6-04. Postman nhớ file cho các lần sau."
+order: 2000

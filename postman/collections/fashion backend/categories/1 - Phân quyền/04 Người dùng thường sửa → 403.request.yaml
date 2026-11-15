@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/categories/1"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "category_name": "X"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Mã trạng thái 403', () => pm.response.to.have.status(403));
+    language: text/javascript
+order: 4000

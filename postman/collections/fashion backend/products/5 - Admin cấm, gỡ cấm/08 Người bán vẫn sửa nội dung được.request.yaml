@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: text
+      key: description
+      value: Đã thay ảnh của shop
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Vẫn BANNED', () => pm.expect(d.status).to.eql('BANNED'));
+    language: text/javascript
+order: 8000

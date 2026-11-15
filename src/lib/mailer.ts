@@ -13,7 +13,7 @@ const transporter =
       })
     : null;
 
-/** true nếu đã cấu hình SMTP (email được gửi thật). */
+/** true nếu đã cấu hình SMTP  */
 export const isMailConfigured = transporter !== null;
 
 interface MailOptions {
@@ -34,3 +34,21 @@ export async function sendMail({ to, subject, text, html }: MailOptions) {
   }
   await transporter.sendMail({ from: env.MAIL_FROM ?? env.SMTP_USER, to, subject, text, html });
 }
+
+// Chống chèn mã HTML khi đưa nội dung do người dùng nhập (tên, lý do...) vào email
+export const escapeHtml = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * Gửi email thông báo dạng nhiều dòng. Gửi lỗi thì chỉ ghi log,
+ * không làm hỏng thao tác chính đã thành công (duyệt shop, cấm sản phẩm...).
+ */
+export function sendNotice(to: { email: string; fullname: string }, subject: string, lines: string[]) {
+  sendMail({
+    to: to.email,
+    subject,
+    text: lines.join('\n'),
+    html: `<p>Xin chào ${escapeHtml(to.fullname)},</p>` + lines.map((l) => `<p>${escapeHtml(l)}</p>`).join(''),
+  }).catch((err) => console.error(`Không gửi được email "${subject}":`, err));
+}
+

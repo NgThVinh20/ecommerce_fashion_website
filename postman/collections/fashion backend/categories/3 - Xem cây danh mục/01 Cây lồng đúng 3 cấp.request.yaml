@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/categories"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const find = (list, id) => { for (const n of list) { if (n.id_category === id) return n; const f = find(n.children || [], id); if (f) return f; } return null; };
+      const tree = pm.response.json().data;
+      const l1 = tree.find(n => n.id_category === Number(pm.environment.get('catL1')));
+      pm.test('Loại cấp 1 nằm ở gốc', () => pm.expect(l1).to.be.an('object'));
+      pm.test('Cấp 1 có 2 loại con (Áo, Quần)', () => pm.expect(l1.children.length).to.eql(2));
+      const l2 = l1.children.find(n => n.id_category === Number(pm.environment.get('catL2')));
+      pm.test('Áo nằm trong cấp 1', () => pm.expect(l2).to.be.an('object'));
+      pm.test('Áo thun nằm trong Áo', () => pm.expect(l2.children.map(n => n.id_category)).to.include(Number(pm.environment.get('catL3'))));
+      pm.test('Loại cấp 2 không nằm ở gốc', () => pm.expect(tree.map(n => n.id_category)).to.not.include(Number(pm.environment.get('catL2'))));
+      pm.test('Mọi nút đều có mảng children', () => pm.expect(tree.every(n => Array.isArray(n.children))).to.be.true);
+    language: text/javascript
+order: 1000

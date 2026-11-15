@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/products/{{productId}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Có shop và email chủ shop', () => pm.expect(d.shop.user.email).to.be.a('string'));
+    language: text/javascript
+order: 2000

@@ -1,0 +1,30 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: product_name
+      value: Áo Thun Cotton Basic
+    - type: text
+      key: id_category
+      value: "{{leafCat}}"
+    - type: text
+      key: description
+      value: Áo thun 100% cotton
+    - type: text
+      key: attributes
+      value: '{"Chất liệu": "Cotton", "Xuất xứ": "Việt Nam"}'
+    - type: text
+      key: skus
+      value: "[]"
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Mã trạng thái 400', () => pm.response.to.have.status(400));
+    language: text/javascript
+order: 5000

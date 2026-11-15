@@ -1,0 +1,22 @@
+$kind: http-request
+name: 08 Thêm ảnh riêng cho biến thể (CHỌN ẢNH ở trường image)
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}/skus/{{skuId}}"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: file
+      key: image
+      src: []
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Có image_url', () => pm.expect(d.image_url).to.include('res.cloudinary.com'));
+    language: text/javascript
+order: 8000

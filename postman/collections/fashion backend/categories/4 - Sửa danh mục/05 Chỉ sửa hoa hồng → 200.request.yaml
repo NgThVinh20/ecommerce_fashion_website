@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/categories/{{catL2}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "commission_rate": 8
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Hoa hồng = 8', () => pm.expect(Number(d.commission_rate)).to.eql(8));
+      pm.test('Tên giữ nguyên', () => pm.expect(d.category_name).to.eql('Áo nam'));
+    language: text/javascript
+order: 5000

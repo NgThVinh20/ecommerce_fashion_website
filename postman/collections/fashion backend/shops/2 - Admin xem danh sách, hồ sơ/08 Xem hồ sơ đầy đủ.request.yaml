@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/shops/{{shopId}}"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Có mã số thuế', () => pm.expect(d.tax_code).to.eql('0123456789'));
+      pm.test('Có số tài khoản', () => pm.expect(d.bank_account_number).to.eql('0123456789'));
+      pm.test('Có email chủ shop', () => pm.expect(d.user.email).to.eql(pm.environment.get('myEmail')));
+      pm.test('Không lộ mật khẩu', () => pm.expect(d.user).to.not.have.property('hash_password'));
+    language: text/javascript
+order: 8000

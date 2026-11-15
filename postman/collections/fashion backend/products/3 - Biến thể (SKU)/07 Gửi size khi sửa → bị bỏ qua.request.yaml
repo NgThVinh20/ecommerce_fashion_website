@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}/skus/{{skuId}}"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: text
+      key: size
+      value: XXL
+    - type: text
+      key: stock
+      value: "15"
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Size giữ nguyên M', () => pm.expect(d.size).to.eql('M'));
+      pm.test('Tồn kho 15', () => pm.expect(d.stock).to.eql(15));
+    language: text/javascript
+order: 7000

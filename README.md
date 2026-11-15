@@ -1,7 +1,7 @@
 # Backend sàn thương mại điện tử thời trang
 
 Backend cho sàn thương mại điện tử thời trang nhiều người bán.
-Công nghệ: Express.js 5, TypeScript, PostgreSQL 16 (Prisma ORM), Redis 7, Zod, Nodemailer (Gmail SMTP).
+Công nghệ: Express.js 5, TypeScript, PostgreSQL 16 (Prisma ORM), Redis 7, Zod, Nodemailer (Gmail SMTP), Cloudinary (lưu ảnh), Multer (nhận file tải lên).
 
 ## Yêu cầu
 
@@ -87,6 +87,7 @@ Xem `.env.example`. Không đưa file `.env` lên Git. Máy phát triển và m�
 | `SMTP_USER`, `SMTP_PASS` | Không | Gmail và App Password 16 ký tự để gửi email |
 | `SMTP_HOST`, `SMTP_PORT` | Không (mặc định `smtp.gmail.com`, `465`) | Máy chủ gửi thư; mạng chặn cổng 465 thì dùng `587` |
 | `MAIL_FROM` | Không | Tên và địa chỉ người gửi, ví dụ `"Fashion Market <abc@gmail.com>"` |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Có | Tài khoản Cloudinary lưu ảnh sản phẩm (trang Dashboard của Cloudinary) |
 
 ### Gửi email (OTP)
 
@@ -98,12 +99,13 @@ Xem `.env.example`. Không đưa file `.env` lên Git. Máy phát triển và m�
 ```
 src/
 ├── config/        Đọc và kiểm tra biến môi trường (env.ts)
-├── lib/           Prisma, Redis, JWT, gửi email (mailer), mã OTP (otp), tạo slug
-├── middlewares/   Xác thực, phân quyền, kiểm tra shop đang hoạt động, xử lý lỗi
+├── lib/           Prisma, Redis, JWT, gửi email (mailer), mã OTP (otp), slug và chuỗi tìm kiếm, Cloudinary
+├── middlewares/   Xác thực, phân quyền, kiểm tra shop đang hoạt động, nhận file tải lên, xử lý lỗi
 ├── modules/       Mỗi mô-đun: routes, controller, service, schema
 │   ├── auth/        Đăng ký, đăng nhập, token, xác thực email
 │   ├── categories/  Loại mặt hàng của sàn
-│   └── shops/       Shop, hồ sơ người bán
+│   ├── shops/       Shop, hồ sơ người bán
+│   └── products/    Sản phẩm, biến thể (SKU), ảnh (Cloudinary), admin kiểm duyệt
 └── routes/        Gom route: index (/api/v1), admin (/admin), seller (/seller)
 prisma/            schema.prisma, migrations, seed.ts
 postman/           Bộ request kiểm thử API
@@ -123,11 +125,11 @@ Mọi lỗi trả về dạng:
 
 | Mã HTTP | Khi nào |
 |---|---|
-| 400 | Dữ liệu sai hình thức (`VALIDATION_ERROR`, kèm `details`), JSON hỏng (`INVALID_JSON`) |
+| 400 | Dữ liệu sai hình thức (`VALIDATION_ERROR`, kèm `details`), JSON hỏng (`INVALID_JSON`), file tải lên không hợp lệ (`INVALID_FILE_TYPE`, `FILE_TOO_LARGE`, `TOO_MANY_FILES`, `NO_FILES`) |
 | 401 | Chưa đăng nhập, token sai hoặc hết hạn, sai email/mật khẩu |
 | 403 | Không đủ quyền, tài khoản bị khóa, email chưa xác thực, shop chưa được duyệt |
 | 404 | Không tìm thấy |
-| 409 | Trùng dữ liệu đã có (email, shop, tên shop, loại mặt hàng), hoặc dữ liệu vừa bị thay đổi bởi người khác |
+| 409 | Trùng dữ liệu đã có (email, shop, tên shop, loại mặt hàng, mã SKU, biến thể cùng size và màu), hoặc dữ liệu vừa bị thay đổi bởi người khác |
 | 422 | Đúng hình thức nhưng vi phạm quy tắc nghiệp vụ (OTP sai/hết hạn, chưa đủ 30 ngày để đổi, duyệt shop không ở trạng thái chờ, quá 3 cấp loại mặt hàng...) |
 | 429 | Gọi quá nhiều lần (gửi OTP liên tục, nhập sai OTP quá 5 lần) |
 | 500 | Lỗi hệ thống không lường trước |
@@ -157,7 +159,9 @@ Mã OTP: 6 chữ số, hiệu lực 5 phút, sai tối đa 5 lần. Chưa xác t
 | GET | /categories | Công khai | Cây loại mặt hàng (tối đa 3 cấp) |
 | POST | /admin/categories | ADMIN | Thêm loại mặt hàng |
 | PATCH | /admin/categories/:id | ADMIN | Sửa tên, tỷ lệ hoa hồng |
-| DELETE | /admin/categories/:id | ADMIN | Xóa (không xóa được khi còn loại con) |
+| DELETE | /admin/categories/:id | ADMIN | Xóa (không xóa được khi còn loại con hoặc còn sản phẩm) |
+
+Không thêm được loại con vào loại mặt hàng đang có sản phẩm, vì sản phẩm chỉ gắn vào loại cấp cuối.
 
 ### Shop
 
@@ -185,4 +189,47 @@ Mã OTP: 6 chữ số, hiệu lực 5 phút, sai tối đa 5 lần. Chưa xác t
 
 Mỗi lần duyệt, từ chối, khóa, mở khóa đều gửi email cho chủ shop. Đổi trạng thái dùng cập nhật có điều kiện: hai admin thao tác cùng lúc thì chỉ một người thành công, người còn lại nhận 422.
 
+### Sản phẩm (người bán)
+
+| Phương thức | Đường dẫn | Quyền | Chức năng |
+|---|---|---|---|
+| POST | /seller/products | SELLER, shop ACTIVE | Tạo sản phẩm kèm ảnh và danh sách biến thể (form-data, một transaction) |
+| GET | /seller/products?status=&q=&page=&limit= | SELLER, shop ACTIVE | Danh sách sản phẩm của shop mình |
+| GET | /seller/products/:id | SELLER, shop ACTIVE | Chi tiết kèm biến thể (sản phẩm shop khác trả 404) |
+| PATCH | /seller/products/:id | SELLER, shop ACTIVE | Sửa tên, loại mặt hàng, mô tả, thuộc tính; giữ / thêm ảnh (form-data) |
+| PATCH | /seller/products/:id/status | SELLER, shop ACTIVE | Ẩn / hiện (`ACTIVE`, `HIDDEN`); sản phẩm bị cấm không tự đổi được |
+| PATCH | /seller/products/:id/featured | SELLER, shop ACTIVE | Bật / tắt nổi bật, tối đa 10 sản phẩm mỗi shop |
+| DELETE | /seller/products/:id | SELLER, shop ACTIVE | Xóa mềm (trạng thái `DELETED`) |
+| POST | /seller/products/:id/skus | SELLER, shop ACTIVE | Thêm biến thể (size, màu, giá, tồn kho, ảnh riêng không bắt buộc; form-data) |
+| PATCH | /seller/products/:id/skus/:skuId | SELLER, shop ACTIVE | Sửa mã, giá, tồn kho, ảnh, ngừng bán biến thể (không đổi size, màu; form-data) |
+
+**Gửi dữ liệu dạng `multipart/form-data`** (tạo / sửa sản phẩm và biến thể):
+
+| Trường | Kiểu | Ghi chú |
+|---|---|---|
+| `images` | File, 1–9 ảnh | Ảnh sản phẩm (JPEG / PNG / WebP, mỗi ảnh tối đa 5 MB); ảnh đầu là ảnh bìa |
+| `product_name`, `id_category`, `description` | Text | Số gửi dạng chuỗi, server tự đổi |
+| `attributes` | Text chứa JSON | `{"Chất liệu":"Cotton","Xuất xứ":"Việt Nam"}` |
+| `skus` | Text chứa JSON | `[{"sku_code":"AT-DO-M","size":"M","color":"Đỏ","price":199000,"stock":10}]` |
+| `keep_images` (chỉ khi sửa) | Text chứa JSON | Link các ảnh cũ muốn giữ, theo thứ tự; ảnh cuối cùng = ảnh giữ lại + ảnh mới gửi kèm |
+| `image` (biến thể) | File, 1 ảnh | Ảnh riêng theo màu; khi sửa gửi `remove_image=true` để bỏ ảnh |
+
+Server kiểm tra hết dữ liệu **rồi mới** tải ảnh lên Cloudinary (thư mục `fashion/shops/<id_shop>/products`); nếu lưu CSDL lỗi thì xóa luôn ảnh vừa tải, không để lại ảnh rác.
+
+Quy tắc chính:
+- Sản phẩm chỉ gắn vào **loại mặt hàng cấp cuối** (422 `CATEGORY_NOT_LEAF`).
+- Mã SKU không trùng trong cùng shop; một sản phẩm không có hai biến thể cùng size và màu.
+- Giá là số nguyên đồng, lớn hơn 0; tồn kho không âm (có ràng buộc CHECK trong CSDL).
+- `min_price`, `max_price` của sản phẩm tự cập nhật theo các biến thể đang bán; `search_name` (không dấu, chữ thường) tự sinh từ tên để tìm kiếm.
+
+### Admin kiểm duyệt sản phẩm
+
+| Phương thức | Đường dẫn | Quyền | Chức năng |
+|---|---|---|---|
+| GET | /admin/products?status=&q=&shop=&page=&limit= | ADMIN | Danh sách sản phẩm, lọc theo trạng thái, shop, tìm theo tên |
+| GET | /admin/products/:id | ADMIN | Chi tiết kèm biến thể, loại mặt hàng, shop |
+| PATCH | /admin/products/:id/ban | ADMIN | Cấm sản phẩm vi phạm, bắt buộc `reason` |
+| PATCH | /admin/products/:id/unban | ADMIN | Gỡ cấm: sản phẩm về `HIDDEN`, người bán kiểm tra rồi tự bật hiện |
+
+Cấm và gỡ cấm đều gửi email cho chủ shop.
 

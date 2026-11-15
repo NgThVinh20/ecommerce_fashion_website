@@ -1,0 +1,17 @@
+$kind: http-request
+name: 10 Xem /shops/info → PENDING
+url: "{{baseUrl}}/api/v1/shops/info"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.environment.set('shopId', d.id_shop); pm.environment.set('shopSlug', d.slug);
+      pm.test('Trạng thái PENDING (shop cũ có thể ở trạng thái khác, xem shopStatus)', () => pm.expect(d.status).to.eql('PENDING'));
+    language: text/javascript
+order: 10000

@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/shops?status=PENDING&limit=100"
+method: GET
+queryParams:
+  status: PENDING
+  limit: "100"
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const b = pm.response.json();
+      pm.test('Có meta phân trang', () => pm.expect(b.meta).to.include.keys('page','limit','total','total_pages'));
+      pm.test('Chỉ toàn PENDING', () => b.data.forEach(s => pm.expect(s.status).to.eql('PENDING')));
+      pm.test('Có shop vừa tạo', () => pm.expect(b.data.map(s => s.id_shop)).to.include(Number(pm.environment.get('shopId'))));
+    language: text/javascript
+order: 1000

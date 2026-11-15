@@ -1,3 +1,0 @@
-$kind: collection
-description: Admin từ chối shop kèm lý do; chủ shop xem lý do, sửa hồ sơ qua `PATCH /shops/info` thì shop tự quay về chờ duyệt
-order: 2000

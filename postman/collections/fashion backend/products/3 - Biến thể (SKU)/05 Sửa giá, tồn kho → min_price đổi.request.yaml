@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}/skus/{{skuId}}"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: text
+      key: price
+      value: "149000"
+    - type: text
+      key: stock
+      value: "20"
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('Giá mới', () => pm.expect(d.price).to.eql('149000'));
+    language: text/javascript
+order: 5000

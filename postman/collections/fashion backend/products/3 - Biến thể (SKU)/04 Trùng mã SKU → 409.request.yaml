@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}/skus"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: sku_code
+      value: AT-{{ts}}-DO-M
+    - type: text
+      key: size
+      value: S
+    - type: text
+      key: color
+      value: Trắng
+    - type: text
+      key: price
+      value: "1000"
+    - type: text
+      key: stock
+      value: "1"
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 409', () => pm.response.to.have.status(409));
+      pm.test('Mã lỗi SKU_CODE_EXISTS', () => pm.expect(pm.response.json().error.code).to.eql('SKU_CODE_EXISTS'));
+    language: text/javascript
+order: 4000

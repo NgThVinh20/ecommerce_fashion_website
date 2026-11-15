@@ -1,0 +1,17 @@
+$kind: http-request
+name: "03 Xem /shops/info: chưa có shop → 404, đã có → 200 (lấy shopId)"
+url: "{{baseUrl}}/api/v1/shops/info"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const code = pm.response.code;
+      pm.test('404 (chưa có shop) hoặc 200 (đã có shop từ lần trước)', () => pm.expect([200, 404]).to.include(code));
+      if (code === 404) pm.test('Mã lỗi SHOP_NOT_FOUND', () => pm.expect(pm.response.json().error.code).to.eql('SHOP_NOT_FOUND'));
+      else { const d = pm.response.json().data; pm.environment.set('shopId', d.id_shop); pm.environment.set('shopSlug', d.slug); pm.environment.set('shopStatus', d.status); }
+    language: text/javascript
+order: 3000

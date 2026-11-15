@@ -1,0 +1,32 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products/{{productId}}/skus"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: sku_code
+      value: AT-{{ts}}-DEN-XL
+    - type: text
+      key: size
+      value: XL
+    - type: text
+      key: color
+      value: Đen
+    - type: text
+      key: price
+      value: "259000"
+    - type: text
+      key: stock
+      value: "7"
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 201', () => pm.response.to.have.status(201));
+      pm.environment.set('skuId3', pm.response.json().data.id_sku);
+    language: text/javascript
+order: 1000

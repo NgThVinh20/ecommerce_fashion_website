@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/admin/products/{{productId}}/ban"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "reason": "Dùng ảnh của thương hiệu khác"
+    }
+auth:
+  type: bearer
+  credentials:
+    token: "{{adminToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const d = pm.response.json().data;
+      pm.test('BANNED', () => pm.expect(d.status).to.eql('BANNED'));
+      pm.test('Có lý do', () => pm.expect(d.ban_reason).to.be.a('string'));
+    language: text/javascript
+order: 5000

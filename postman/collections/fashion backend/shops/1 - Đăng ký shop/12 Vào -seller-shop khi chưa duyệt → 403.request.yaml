@@ -1,0 +1,13 @@
+$kind: http-request
+name: 12 Vào /seller/shop khi chưa duyệt → 403
+url: "{{baseUrl}}/api/v1/seller/shop"
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Mã trạng thái 403', () => pm.response.to.have.status(403));
+    language: text/javascript
+order: 12000

@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/v1/seller/products?status=BANNED"
+method: GET
+queryParams:
+  status: BANNED
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 200', () => pm.response.to.have.status(200));
+      const p = pm.response.json().data.find(x => x.id_product === Number(pm.environment.get('productId')));
+      pm.test('Có ban_reason', () => pm.expect(p.ban_reason).to.be.a('string'));
+    language: text/javascript
+order: 9000

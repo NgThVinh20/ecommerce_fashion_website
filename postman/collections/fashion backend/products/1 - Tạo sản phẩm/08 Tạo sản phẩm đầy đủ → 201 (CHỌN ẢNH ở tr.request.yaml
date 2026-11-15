@@ -1,0 +1,42 @@
+$kind: http-request
+name: 08 Tạo sản phẩm đầy đủ → 201 (CHỌN ẢNH ở trường images)
+url: "{{baseUrl}}/api/v1/seller/products"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: product_name
+      value: Áo Thun Cotton Basic
+    - type: text
+      key: id_category
+      value: "{{leafCat}}"
+    - type: text
+      key: description
+      value: Áo thun 100% cotton
+    - type: text
+      key: attributes
+      value: '{"Chất liệu": "Cotton", "Xuất xứ": "Việt Nam"}'
+    - type: text
+      key: skus
+      value: '[{"sku_code": "AT-{{ts}}-DO-M", "size": "M", "color": "Đỏ", "price": 199000, "stock": 10}, {"sku_code": "AT-{{ts}}-DO-L", "size": "L", "color": "Đỏ", "price": 209000, "stock": 5}]'
+    - type: file
+      key: images
+      src: []
+auth:
+  type: bearer
+  credentials:
+    token: "{{myToken}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Mã trạng thái 201', () => pm.response.to.have.status(201));
+      const d = pm.response.json().data;
+      pm.test('Trạng thái ACTIVE', () => pm.expect(d.status).to.eql('ACTIVE'));
+      pm.test('Có ảnh Cloudinary', () => pm.expect(d.images[0]).to.include('res.cloudinary.com'));
+      pm.test('search_name không dấu', () => pm.expect(d.search_name).to.eql('ao thun cotton basic'));
+      pm.test('min_price, max_price đúng', () => { pm.expect(d.min_price).to.eql('199000'); pm.expect(d.max_price).to.eql('209000'); });
+      pm.test('Có 2 biến thể', () => pm.expect(d.skus.length).to.eql(2));
+      pm.environment.set('productId', d.id_product); pm.environment.set('skuId', d.skus[0].id_sku); pm.environment.set('productImg', d.images[0]);
+    language: text/javascript
+order: 8000
